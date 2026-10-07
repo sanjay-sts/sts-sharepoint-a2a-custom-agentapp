@@ -1,1 +1,22 @@
+# Secrets and tokens
 .env
+.token_cache*.json
+*.token_cache.json
+
+# Generated data
+inventory.csv
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# SPFx / Node
+node_modules/
+webpart/lib/
+webpart/lib-*/
+webpart/dist/
+webpart/temp/
+webpart/release/
+webpart/sharepoint/solution/
+*.sppkg
