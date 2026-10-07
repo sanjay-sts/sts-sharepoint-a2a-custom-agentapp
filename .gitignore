@@ -20,3 +20,6 @@ webpart/temp/
 webpart/release/
 webpart/sharepoint/solution/
 *.sppkg
+
+# Local server logs
+*.log
