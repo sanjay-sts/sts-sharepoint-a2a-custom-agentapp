@@ -6,6 +6,7 @@ users' requests can never share a token.
 """
 
 import logging
+from datetime import datetime, timezone
 import os
 import warnings
 from collections.abc import AsyncIterator
@@ -22,6 +23,8 @@ from agent.model import make_model
 MCP_URL = os.environ.get("MCP_URL", "http://127.0.0.1:8001/mcp")
 
 SYSTEM_PROMPT = """\
+Today is {today} (UTC). Use this date for any "last N days" or "recent" question; never assume another date.
+
 You answer questions about which files exist in the user's SharePoint sites.
 You can list and describe files; you cannot read their contents.
 
@@ -55,7 +58,8 @@ async def stream_answer(question: str, user_token: str) -> AsyncIterator[dict]:
     client = Client(MCP_URL, auth=user_token)  # per request: this user's token only
     async with MCPAdapter(client) as adapter:
         tools = await adapter.list_tools()
-        graph = create_agent(_get_model(), tools, system_prompt=SYSTEM_PROMPT)
+        today = datetime.now(timezone.utc).date().isoformat()
+        graph = create_agent(_get_model(), tools, system_prompt=SYSTEM_PROMPT.format(today=today))
         async for chunk, meta in graph.astream(
             {"messages": [{"role": "user", "content": question}]},
             stream_mode="messages",
