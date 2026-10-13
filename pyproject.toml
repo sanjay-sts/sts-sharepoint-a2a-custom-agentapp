@@ -13,4 +13,5 @@ dependencies = [
     "langchain-aws>=1.8.1",
     "langgraph>=1.2.14",
     "msal>=1.39.0",
+    "pyjwt>=2.15.1",
 ]

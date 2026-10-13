@@ -1963,6 +1963,7 @@ dependencies = [
     { name = "langchain-aws" },
     { name = "langgraph" },
     { name = "msal" },
+    { name = "pyjwt" },
 ]
 
 [package.metadata]
@@ -1975,6 +1976,7 @@ requires-dist = [
     { name = "langchain-aws", specifier = ">=1.8.1" },
     { name = "langgraph", specifier = ">=1.2.14" },
     { name = "msal", specifier = ">=1.39.0" },
+    { name = "pyjwt", specifier = ">=2.15.1" },
 ]
 
 [[package]]
