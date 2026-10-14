@@ -100,9 +100,27 @@ def _file_row(folder: str, item: dict, site: str | None = None, library: str | N
 
 
 async def _sites(gt: str) -> list[dict]:
-    """Sites the user can see. Skips SharePoint Embedded containers (/contentstorage/), which are not sites."""
-    sites = [s async for s in sp_graph.get_paged(gt, "sites?search=*")]
-    return [s for s in sites if "/contentstorage/" not in (s.get("webUrl") or "")]
+    """Sites the user can open right now.
+
+    Search (`sites?search=*`) answers from an index that applies permission changes
+    with a delay, so each candidate is confirmed with a direct read before it is
+    returned. Skips SharePoint Embedded containers (/contentstorage/), which are not sites.
+    """
+    found = [s async for s in sp_graph.get_paged(gt, "sites?search=*")]
+    found = [s for s in found if "/contentstorage/" not in (s.get("webUrl") or "")]
+
+    async def readable(site: dict) -> bool:
+        try:
+            await sp_graph.get_json(gt, f"sites/{site['id']}?$select=id")
+            return True
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code in (401, 403, 404):
+                log.info("site dropped, not readable by caller: %s", site.get("webUrl"))
+                return False
+            raise
+
+    checks = await asyncio.gather(*(readable(s) for s in found))
+    return [s for s, ok in zip(found, checks) if ok]
 
 
 async def _all_files(gt: str, site_id: str | None = None) -> list[dict]:

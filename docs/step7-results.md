@@ -21,3 +21,19 @@ The model assumed a 2025 date, so question 3 for A first returned four PDFs. Fix
 ## Observation, not a failure
 
 Give @ Contoso, Live @ Contoso and Work @ Contoso open for Adele in the browser but do not appear in B's site list. `list_sites` uses Graph `sites?search=*`, which omits sites where access comes only from a tenant-wide "Everyone" claim rather than membership. B therefore sees fewer sites than the browser, never more. Those three sites hold four files in total.
+
+## Extra check: site made private after B had seen it (2026-10-13, later)
+
+Adele was removed from Mark 8 Project Team and the site was switched from Public to Private. Mark 8 is otherwise visible to everyone in the tenant, which is why removal alone changed nothing.
+
+| Check as B | Before | After privacy change |
+|---|---|---|
+| How many files are in each site, by type? | Mark 8: 6, Test site 1: 10 | Test site 1 only |
+| Find Product Launch.pptx | Found, with link | Not found |
+| What sites can you see? | 13, Mark 8 included | 13 with Mark 8 still listed for several minutes, then 12 without it |
+
+As A, Product Launch.pptx was found throughout.
+
+The site list lagged because `list_sites` used Graph `sites?search=*`, which answers from the search index and applies permission changes with a delay. File lookups go to the drive directly and were denied immediately. Fix: `_sites` in `mcp_server/server.py` now confirms every search hit with a direct `GET sites/{id}` and drops anything the caller cannot read. On the rerun the index had already caught up, so the drop path did not fire; it is a guard against the next lag, not a change in steady-state output.
+
+Site visibility in this tenant: Private sites with files are Contoso Team, sts it services, Test site 1, testing team. Every other site with files is Public, so membership does not restrict it.
