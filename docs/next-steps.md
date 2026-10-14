@@ -1,6 +1,6 @@
-# Next steps (as of 2026-10-13, late evening)
+# Next steps (updated 2026-10-14 morning)
 
-Branch `#10_local_test`. Steps 1 to 9 pass and are committed. Step 10's main pass check also passed: a full streamed round trip in the hosted workbench as user A ("What sites can you see?" returned 20 sites with links). Two forced error states remain before step 10 is signed off.
+Branch `#10_local_test`. Steps 1 to 9 pass and are committed. Step 10's main pass check also passed: a full streamed round trip in the hosted workbench as user A ("What sites can you see?" returned 20 sites with links). Step 10 gate confirmed by the owner on 2026-10-14 after all three error states (AWS credentials, 401, network) were shown in the workbench.
 
 ## Start-up checklist for the next session
 
