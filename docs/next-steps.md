@@ -21,7 +21,11 @@ Branch `#10_local_test`. Steps 1 to 9 pass and are committed. Step 10's main pas
 
 Owner confirms, then commit "Step 10: chat UI gate passed".
 
-## Step 11: package and deploy
+## Step 11: package and deploy (done 2026-10-14)
+
+Package built from commit 394c9dc, uploaded to the app catalog, API access approved, AgentChat answered on a Test site 1 page as stsadmin (68 files across 20 sites, matching inventory.csv regenerated the same morning; the upload itself added 12 files to the Apps site).
+
+Original procedure for reference:
 
 ```
 cd webpart
