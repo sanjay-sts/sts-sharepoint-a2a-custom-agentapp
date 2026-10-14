@@ -12,7 +12,15 @@ export class ChatError extends Error {
   public constructor(public readonly kind: ChatErrorKind, message: string) {
     super(message);
     this.name = 'ChatError';
+    Object.setPrototypeOf(this, ChatError.prototype); // keep instanceof working after downlevel
   }
+}
+
+const KINDS: ChatErrorKind[] = ['unauthorized', 'network', 'aws_credentials', 'agent_failed', 'rpc'];
+
+/** True for a ChatError, even across module copies or ES5 downlevel. */
+export function isChatError(e: unknown): e is ChatError {
+  return !!e && typeof e === 'object' && KINDS.indexOf((e as ChatError).kind) >= 0 && typeof (e as ChatError).message === 'string';
 }
 
 export interface StreamHandlers {

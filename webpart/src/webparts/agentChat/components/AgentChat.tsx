@@ -5,7 +5,7 @@ import styles from './AgentChat.module.scss';
 import type { IAgentChatProps } from './IAgentChatProps';
 import { MessageList, IChatMessage } from './MessageList';
 import { ChatInput } from './ChatInput';
-import { streamAnswer, ChatError } from '../a2aClient';
+import { streamAnswer, ChatError, isChatError } from '../a2aClient';
 
 let counter = 0;
 const nextId = (): string => `m${++counter}`;
@@ -42,7 +42,7 @@ const AgentChat: React.FunctionComponent<IAgentChatProps> = ({ agentUrl, getToke
       }, controller.signal);
       patch(agentId, { status: undefined });
     } catch (e) {
-      const err = e instanceof ChatError ? e : new ChatError('agent_failed', String(e));
+      const err = isChatError(e) ? e : new ChatError('agent_failed', String(e));
       console.error('AgentChat', err.kind, err.message);
       patch(agentId, { status: undefined, error: { kind: err.kind, detail: err.message } });
     } finally {

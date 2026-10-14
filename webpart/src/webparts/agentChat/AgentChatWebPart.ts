@@ -18,13 +18,24 @@ export interface IAgentChatWebPartProps {
   apiResource: string;
 }
 
+const DEFAULT_AGENT_URL = 'http://127.0.0.1:8002';
+const DEFAULT_API_RESOURCE = 'api://1162088a-3e99-4dad-b52e-d1f2ce5f1c72';
+
 export default class AgentChatWebPart extends BaseClientSideWebPart<IAgentChatWebPartProps> {
+
+  private get _agentUrl(): string {
+    return (this.properties.agentUrl || DEFAULT_AGENT_URL).trim();
+  }
+
+  private get _apiResource(): string {
+    return (this.properties.apiResource || DEFAULT_API_RESOURCE).trim();
+  }
 
   public render(): void {
     const element: React.ReactElement<IAgentChatProps> = React.createElement(
       AgentChat,
       {
-        agentUrl: this.properties.agentUrl,
+        agentUrl: this._agentUrl,
         getToken: () => this._getToken(),
         userDisplayName: this.context.pageContext.user.displayName
       }
@@ -35,7 +46,7 @@ export default class AgentChatWebPart extends BaseClientSideWebPart<IAgentChatWe
   /** Delegated token for the agent API via SharePoint's AadTokenProvider. */
   private async _getToken(): Promise<string> {
     const provider = await this.context.aadTokenProviderFactory.getTokenProvider();
-    return provider.getToken(this.properties.apiResource);
+    return provider.getToken(this._apiResource);
   }
 
   protected onDispose(): void {
