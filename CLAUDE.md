@@ -22,7 +22,14 @@ uv run scripts/check_model.py          # Bedrock reachable
 uv run scripts/list_sites.py           # regenerate inventory.csv (device code, user A)
 ```
 
-Python goes through `uv add` and `uv run`. The web part uses npm and Heft (`heft start`, `heft build --production`, `heft package-solution --production`), not gulp.
+Python goes through `uv add` and `uv run`. The web part uses npm and Heft (`npx heft start --nobrowser`, `npx heft build --production`, `npx heft package-solution --production`), not gulp.
+
+Web part development notes:
+- Before `heft start`, check nothing else holds port 4321 (`netstat -ano | findstr :4321`); an orphan serves a stale bundle and the workbench shows "Something went wrong".
+- The dev server reads manifests at startup only; restart it after editing `*.manifest.json`. Property defaults are also hard-coded in `AgentChatWebPart.ts` as a fallback.
+- Heft colours its log; grep for `compiled` and `Encountered`, not `compiled successfully`.
+- SPFx downlevels classes: never rely on `instanceof` for `Error` subclasses in the web part; use `isChatError`.
+- Status so far is recorded in `docs/step7-results.md` and `docs/next-steps.md`.
 
 ## Fixed decisions, do not revisit
 
@@ -31,7 +38,9 @@ Python goes through `uv add` and `uv run`. The web part uses npm and Heft (`heft
 - User A is `stsadmin@2tdgcb.onmicrosoft.com`; tenant host `2tdgcb.sharepoint.com`.
 - Bedrock model `us.anthropic.claude-sonnet-4-5-20250929-v1:0` in `us-east-1`, default AWS credential chain (SSO profile or `AWS_BEARER_TOKEN_BEDROCK`). Never pass credentials in code.
 - `.env` keys: `TENANT_ID`, `CLIENT_ID`, `CLIENT_SECRET`, `AWS_REGION`, `BEDROCK_MODEL_ID`, `SHAREPOINT_ORIGIN`, optional `AWS_PROFILE`, `MCP_URL`. Template in `.env.example`.
-- The A2A server speaks a2a-sdk 1.2 JSON-RPC: method `SendStreamingMessage`, proto-JSON params, `A2A-Version: 1.0` header required.
+- The A2A server speaks a2a-sdk 1.2 JSON-RPC: method `SendStreamingMessage`, proto-JSON params (`role: ROLE_USER`, `parts: [{text}]`), `A2A-Version: 1.0` header required. SSE `data:` lines carry `result.task | statusUpdate | artifactUpdate`. Verified with curl on 2026-10-13.
+- Localhost from the hosted workbench works; Chrome/Edge show a one-time local-network Allow prompt. No dev tunnel or AWS hosting needed.
+- User B for tests is `AdeleV@2tdgcb.onmicrosoft.com` (member of Test site 1 only among private sites). Public group sites are visible to every tenant user regardless of membership.
 
 ## Gates
 
