@@ -6,86 +6,36 @@ import {
   PropertyPaneTextField
 } from '@microsoft/sp-property-pane';
 import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
-import { IReadonlyTheme } from '@microsoft/sp-component-base';
 
 import * as strings from 'AgentChatWebPartStrings';
 import AgentChat from './components/AgentChat';
 import { IAgentChatProps } from './components/IAgentChatProps';
 
 export interface IAgentChatWebPartProps {
-  description: string;
+  /** Base URL of the A2A server, e.g. http://127.0.0.1:8002 */
+  agentUrl: string;
+  /** Resource the token is requested for: the API's Application ID URI (api://<client-id>). */
+  apiResource: string;
 }
 
 export default class AgentChatWebPart extends BaseClientSideWebPart<IAgentChatWebPartProps> {
-
-  private _isDarkTheme: boolean = false;
-  private _environmentMessage: string = '';
 
   public render(): void {
     const element: React.ReactElement<IAgentChatProps> = React.createElement(
       AgentChat,
       {
-        description: this.properties.description,
-        isDarkTheme: this._isDarkTheme,
-        environmentMessage: this._environmentMessage,
+        agentUrl: this.properties.agentUrl,
+        getToken: () => this._getToken(),
         userDisplayName: this.context.pageContext.user.displayName
       }
     );
-
     ReactDom.render(element, this.domElement);
   }
 
-  protected onInit(): Promise<void> {
-    return this._getEnvironmentMessage().then(message => {
-      this._environmentMessage = message;
-    });
-  }
-
-
-
-  private _getEnvironmentMessage(): Promise<string> {
-    if (!!this.context.sdks.microsoftTeams) { // running in Teams, office.com or Outlook
-      return this.context.sdks.microsoftTeams.teamsJs.app.getContext()
-        .then(context => {
-          let environmentMessage: string = '';
-          switch (context.app.host.name) {
-            case 'Office': // running in Office
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentOffice : strings.AppOfficeEnvironment;
-              break;
-            case 'Outlook': // running in Outlook
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentOutlook : strings.AppOutlookEnvironment;
-              break;
-            case 'Teams': // running in Teams
-            case 'TeamsModern':
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentTeams : strings.AppTeamsTabEnvironment;
-              break;
-            default:
-              environmentMessage = strings.UnknownEnvironment;
-          }
-
-          return environmentMessage;
-        });
-    }
-
-    return Promise.resolve(this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentSharePoint : strings.AppSharePointEnvironment);
-  }
-
-  protected onThemeChanged(currentTheme: IReadonlyTheme | undefined): void {
-    if (!currentTheme) {
-      return;
-    }
-
-    this._isDarkTheme = !!currentTheme.isInverted;
-    const {
-      semanticColors
-    } = currentTheme;
-
-    if (semanticColors) {
-      this.domElement.style.setProperty('--bodyText', semanticColors.bodyText || null);
-      this.domElement.style.setProperty('--link', semanticColors.link || null);
-      this.domElement.style.setProperty('--linkHovered', semanticColors.linkHovered || null);
-    }
-
+  /** Delegated token for the agent API via SharePoint's AadTokenProvider. */
+  private async _getToken(): Promise<string> {
+    const provider = await this.context.aadTokenProviderFactory.getTokenProvider();
+    return provider.getToken(this.properties.apiResource);
   }
 
   protected onDispose(): void {
@@ -100,16 +50,13 @@ export default class AgentChatWebPart extends BaseClientSideWebPart<IAgentChatWe
     return {
       pages: [
         {
-          header: {
-            description: strings.PropertyPaneDescription
-          },
+          header: { description: strings.PropertyPaneDescription },
           groups: [
             {
               groupName: strings.BasicGroupName,
               groupFields: [
-                PropertyPaneTextField('description', {
-                  label: strings.DescriptionFieldLabel
-                })
+                PropertyPaneTextField('agentUrl', { label: strings.AgentUrlFieldLabel }),
+                PropertyPaneTextField('apiResource', { label: strings.ApiResourceFieldLabel })
               ]
             }
           ]

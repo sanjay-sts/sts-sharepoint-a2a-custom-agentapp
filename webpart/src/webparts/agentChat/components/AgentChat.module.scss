@@ -1,29 +1,26 @@
 .agentChat {
-  overflow: hidden;
   padding: 1em;
-  color: "[theme:bodyText, default: #323130]";
-  color: var(--bodyText);
+  color: var(--bodyText, inherit);
 }
 
-.welcome {
-  text-align: center;
+.messages {
+  max-height: 480px;
+  overflow-y: auto;
+  padding: 4px;
 }
 
-.welcomeImage {
-  width: 100%;
-  max-width: 420px;
+.user {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(0, 120, 212, 0.12);
 }
 
-.links {
-  a {
-    text-decoration: none;
-    color: "[theme:link, default:#03787c]";
-    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
-
-    &:hover {
-      text-decoration: underline;
-      color: "[theme:linkHovered, default: #014446]";
-      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
-    }
-  }
+.agent {
+  align-self: flex-start;
+  max-width: 95%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
 }

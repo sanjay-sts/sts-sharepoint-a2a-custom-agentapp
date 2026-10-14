@@ -1,44 +1,66 @@
 import * as React from 'react';
+import { Stack } from '@fluentui/react/lib/Stack';
+import { Text } from '@fluentui/react/lib/Text';
 import styles from './AgentChat.module.scss';
 import type { IAgentChatProps } from './IAgentChatProps';
-import { escape } from '@microsoft/sp-lodash-subset';
-import welcomeDark from '../assets/welcome-dark.png';
-import welcomeLight from '../assets/welcome-light.png';
+import { MessageList, IChatMessage } from './MessageList';
+import { ChatInput } from './ChatInput';
+import { streamAnswer, ChatError } from '../a2aClient';
 
-export default class AgentChat extends React.Component<IAgentChatProps> {
-  public render(): React.ReactElement<IAgentChatProps> {
-    const {
-      description,
-      isDarkTheme,
-      environmentMessage,
-      userDisplayName
-    } = this.props;
+let counter = 0;
+const nextId = (): string => `m${++counter}`;
 
-    return (
-      <section className={`${styles.agentChat}`}>
-        <div className={styles.welcome}>
-          <img alt="" src={isDarkTheme ? welcomeDark : welcomeLight} className={styles.welcomeImage} />
-          <h2>Well done, {escape(userDisplayName)}!</h2>
-          <div>{environmentMessage}</div>
-          <div>Web part property value: <strong>{escape(description)}</strong></div>
-        </div>
-        <div>
-          <h3>Welcome to SharePoint Framework!</h3>
-          <p>
-            The SharePoint Framework (SPFx) is a extensibility model for Microsoft Viva, Microsoft Teams and SharePoint. It&#39;s the easiest way to extend Microsoft 365 with automatic Single Sign On, automatic hosting and industry standard tooling.
-          </p>
-          <h4>Learn more about SPFx development:</h4>
-          <ul className={styles.links}>
-            <li><a href="https://aka.ms/spfx" target="_blank" rel="noreferrer">SharePoint Framework Overview</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-graph" target="_blank" rel="noreferrer">Use Microsoft Graph in your solution</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-teams" target="_blank" rel="noreferrer">Build for Microsoft Teams using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-viva" target="_blank" rel="noreferrer">Build for Microsoft Viva Connections using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-store" target="_blank" rel="noreferrer">Publish SharePoint Framework applications to the marketplace</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-api" target="_blank" rel="noreferrer">SharePoint Framework API reference</a></li>
-            <li><a href="https://aka.ms/m365pnp" target="_blank" rel="noreferrer">Microsoft 365 Developer Community</a></li>
-          </ul>
-        </div>
-      </section>
-    );
-  }
-}
+const AgentChat: React.FunctionComponent<IAgentChatProps> = ({ agentUrl, getToken, userDisplayName }) => {
+  const [messages, setMessages] = React.useState<IChatMessage[]>([]);
+  const [busy, setBusy] = React.useState(false);
+  const abortRef = React.useRef<AbortController | null>(null);
+
+  React.useEffect(() => () => abortRef.current?.abort(), []);
+
+  const patch = (id: string, change: Partial<IChatMessage>): void =>
+    setMessages(ms => ms.map(m => (m.id === id ? { ...m, ...change } : m)));
+
+  const ask = async (question: string): Promise<void> => {
+    const agentId = nextId();
+    setMessages(ms => [...ms,
+      { id: nextId(), role: 'user', text: question },
+      { id: agentId, role: 'agent', text: '', status: 'Working...' }
+    ]);
+    setBusy(true);
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      let token: string;
+      try {
+        token = await getToken();
+      } catch (e) {
+        throw new ChatError('unauthorized', `Could not get a token: ${(e as Error).message || e}`);
+      }
+      await streamAnswer(agentUrl, token, question, {
+        onText: text => patch(agentId, { text, status: undefined }),
+        onStatus: status => patch(agentId, { status })
+      }, controller.signal);
+      patch(agentId, { status: undefined });
+    } catch (e) {
+      const err = e instanceof ChatError ? e : new ChatError('agent_failed', String(e));
+      console.error('AgentChat', err.kind, err.message);
+      patch(agentId, { status: undefined, error: { kind: err.kind, detail: err.message } });
+    } finally {
+      setBusy(false);
+      abortRef.current = null;
+    }
+  };
+
+  return (
+    <section className={styles.agentChat}>
+      <Stack tokens={{ childrenGap: 12 }}>
+        <Text variant="large">SharePoint discovery agent</Text>
+        <Text variant="small">Signed in as {userDisplayName}. Answers only cover files you can open.</Text>
+        <MessageList messages={messages} />
+        <ChatInput disabled={busy} onSend={q => { ask(q).catch(() => undefined); }} />
+      </Stack>
+    </section>
+  );
+};
+
+export default AgentChat;

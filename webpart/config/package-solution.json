@@ -16,10 +16,10 @@
     },
     "metadata": {
       "shortDescription": {
-        "default": "sp-agent-chat description"
+        "default": "Chat with the SharePoint discovery agent"
       },
       "longDescription": {
-        "default": "sp-agent-chat description"
+        "default": "Asks an A2A agent which files exist in the sites you can open. Read-only; answers come from Microsoft Graph as you."
       },
       "screenshotPaths": [],
       "videoUrl": "",
@@ -31,6 +31,12 @@
         "description": "The feature that activates elements of the sp-agent-chat solution.",
         "id": "11b3e1d8-e5e3-441c-afca-42b62aeb4693",
         "version": "1.0.0.0"
+      }
+    ],
+    "webApiPermissionRequests": [
+      {
+        "resource": "sp-agent-poc",
+        "scope": "access_as_user"
       }
     ]
   },
