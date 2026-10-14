@@ -1,4 +1,6 @@
-# Next steps (updated 2026-10-14 morning)
+# Next steps (updated 2026-10-14, PoC complete)
+
+All twelve steps of `mvp_prd_codeinstruction.md` have passed. Final results: `docs/step12-results.md`. What follows is kept for reference and for the housekeeping list at the end.
 
 Branch `#10_local_test`. Steps 1 to 9 pass and are committed. Step 10's main pass check also passed: a full streamed round trip in the hosted workbench as user A ("What sites can you see?" returned 20 sites with links). Step 10 gate confirmed by the owner on 2026-10-14 after all three error states (AWS credentials, 401, network) were shown in the workbench.
 

@@ -2,7 +2,7 @@
 
 Proof of concept: a SharePoint web part that asks a discovery agent about the user's own sites and files. The web part gets an Entra token, calls an A2A server, which runs a LangGraph agent on Claude (Bedrock). The agent's tools live on a FastMCP server that calls Microsoft Graph as the signed-in user (on-behalf-of), so each user only sees what they can open.
 
-Build spec and step list: `mvp_prd_codeinstruction.md`. Design record for the remaining steps: `docs/superpowers/specs/2026-10-13-steps-7-12-design.md`.
+Build spec and step list: `mvp_prd_codeinstruction.md`. All twelve steps passed on 2026-10-14; see `docs/step7-results.md` and `docs/step12-results.md`. Design record for the remaining steps: `docs/superpowers/specs/2026-10-13-steps-7-12-design.md`.
 
 ## Prerequisites
 
