@@ -1,0 +1,23 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "whichFolder": "subdir",
+    "solutionName": "sp-agent-chat",
+    "environment": "spo",
+    "packageManager": "npm",
+    "useGulp": false,
+    "componentType": "webpart",
+    "template": "react",
+    "componentName": "AgentChat",
+    "componentDescription": "Ask the SharePoint discovery agent",
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "22.17.0",
+    "sdksVersions": {},
+    "version": "1.23.2",
+    "libraryName": "sp-agent-chat",
+    "libraryId": "cba9c819-d5bd-4e0d-876c-d43e53c0af6c",
+    "solutionShortDescription": "sp-agent-chat description",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false
+  }
+}

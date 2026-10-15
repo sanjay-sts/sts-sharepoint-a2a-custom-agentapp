@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "agent-chat-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/agentChat/AgentChatWebPart.js",
+          "manifest": "./src/webparts/agentChat/AgentChatWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "AgentChatWebPartStrings": "lib/webparts/agentChat/loc/{locale}.js"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "sp-agent-chat-client-side-solution",
+    "id": "cba9c819-d5bd-4e0d-876c-d43e53c0af6c",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.23.2"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "Chat with the SharePoint discovery agent"
+      },
+      "longDescription": {
+        "default": "Asks an A2A agent which files exist in the sites you can open. Read-only; answers come from Microsoft Graph as you."
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "sp-agent-chat Feature",
+        "description": "The feature that activates elements of the sp-agent-chat solution.",
+        "id": "11b3e1d8-e5e3-441c-afca-42b62aeb4693",
+        "version": "1.0.0.0"
+      }
+    ],
+    "webApiPermissionRequests": [
+      {
+        "resource": "sp-agent-poc",
+        "scope": "access_as_user"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/sp-agent-chat.sppkg"
+  }
+}

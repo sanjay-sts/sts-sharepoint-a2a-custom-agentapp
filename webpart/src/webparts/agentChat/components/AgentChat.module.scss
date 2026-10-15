@@ -1,0 +1,26 @@
+.agentChat {
+  padding: 1em;
+  color: var(--bodyText, inherit);
+}
+
+.messages {
+  max-height: 480px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.user {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(0, 120, 212, 0.12);
+}
+
+.agent {
+  align-self: flex-start;
+  max-width: 95%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+}
