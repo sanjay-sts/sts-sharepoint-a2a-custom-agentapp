@@ -5,6 +5,9 @@
 
 # Generated data
 inventory.csv
+seed_manifest.csv
+workiq_*.csv
+workiq_raw*.json
 
 # Python
 .venv/

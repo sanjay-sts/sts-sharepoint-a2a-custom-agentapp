@@ -15,3 +15,10 @@ dependencies = [
     "msal>=1.39.0",
     "pyjwt>=2.15.1",
 ]
+
+[dependency-groups]
+dev = [
+    "fpdf2>=2.8.9",
+    "openpyxl>=3.1.5",
+    "python-docx>=1.2.0",
+]

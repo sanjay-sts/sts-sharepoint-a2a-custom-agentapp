@@ -1,11 +1,14 @@
 """List every SharePoint site, library and file the signed-in user can see.
 
 Signs in with the device-code flow (public client), caches the token in
-.token_cache.json, prints a file count per library and writes inventory.csv.
+.token_cache.json (or .token_cache_<label>_graph.json with --user), prints a
+file count per library and writes inventory.csv, including the DocType column.
 
     uv run scripts/list_sites.py
+    uv run scripts/list_sites.py --user svc
 """
 
+import argparse
 import csv
 import os
 import sys
@@ -23,18 +26,19 @@ SCOPES = ["Sites.Read.All", "Files.Read.All"]
 
 CSV_FIELDS = [
     "site", "library", "folder", "name", "type", "size", "modified",
-    "modified_by", "url", "drive_id", "item_id",
+    "modified_by", "url", "drive_id", "item_id", "doctype",
 ]
 
 
-def get_token() -> str:
+def get_token(label: str | None = None) -> str:
     load_dotenv(ROOT / ".env")
+    cache_path = ROOT / f".token_cache_{label}_graph.json" if label else CACHE_PATH
     tenant_id = os.environ["TENANT_ID"]
     client_id = os.environ["CLIENT_ID"]
 
     cache = msal.SerializableTokenCache()
-    if CACHE_PATH.exists():
-        cache.deserialize(CACHE_PATH.read_text())
+    if cache_path.exists():
+        cache.deserialize(cache_path.read_text())
 
     app = msal.PublicClientApplication(
         client_id,
@@ -55,7 +59,7 @@ def get_token() -> str:
         result = app.acquire_token_by_device_flow(flow)
 
     if cache.has_state_changed:
-        CACHE_PATH.write_text(cache.serialize())
+        cache_path.write_text(cache.serialize())
 
     if "access_token" not in result:
         sys.exit(f"Sign-in failed: {result.get('error')}: {result.get('error_description')}")
@@ -78,7 +82,7 @@ def get_paged(client: httpx.Client, url: str):
 
 def walk_files(client: httpx.Client, drive_id: str, item_id: str = "root", folder: str = ""):
     """Yield (folder_path, item) for every file under a folder, recursively."""
-    url = f"{GRAPH}/drives/{drive_id}/items/{item_id}/children"
+    url = f"{GRAPH}/drives/{drive_id}/items/{item_id}/children?$expand=listItem($expand=fields($select=DocType))"
     for item in get_paged(client, url):
         if "folder" in item:
             sub = f"{folder}/{item['name']}" if folder else item["name"]
@@ -92,7 +96,9 @@ def file_type(name: str) -> str:
 
 
 def main():
-    token = get_token()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--user", help="token cache label, e.g. svc (default: the original cache)")
+    token = get_token(parser.parse_args().user)
     rows = []
     with httpx.Client(headers={"Authorization": f"Bearer {token}"}, timeout=30) as client:
         sites = list(get_paged(client, f"{GRAPH}/sites?search=*"))
@@ -123,6 +129,7 @@ def main():
                         "url": item.get("webUrl", ""),
                         "drive_id": drive["id"],
                         "item_id": item["id"],
+                        "doctype": (((item.get("listItem") or {}).get("fields")) or {}).get("DocType", ""),
                     })
                 print(f"  {drive['name']}: {count} file(s)")
 
