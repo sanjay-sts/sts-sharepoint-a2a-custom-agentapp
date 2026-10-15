@@ -1,0 +1,10 @@
+policy	Which company policy documents do we have?
+handbook	Is there an employee handbook or a guide for staff?
+leave	How much holiday do employees get and how do they book time off?
+conduct	What standards of behaviour are expected of employees?
+benefits	What benefits does the company provide, such as pension and medical cover?
+onboarding	What should a new starter do in their first week?
+safety	What are the health and safety requirements for staff?
+expenses	How do employees claim back money they spent on work?
+travel	What are the rules for booking business travel?
+remote work	Can employees work from home, and what support is provided?
