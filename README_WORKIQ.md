@@ -1,8 +1,7 @@
 # Work IQ discovery test
 
-> **Preliminary. Run 1, 2026-10-15, as stsadmin, seeds indexed same day.**
-> svc-discovery, the intended service account, got no seed documents back from Work IQ on day one.
-> Run 2 (same seeds, about 24 hours later, as svc-discovery) is pending. See [Run 2 pending](#run-2-pending).
+> **Run 1, 2026-10-15, as stsadmin, seeds indexed same day. Run 2, 2026-10-16, as svc-discovery and stsadmin.**
+> On day one svc-discovery, the intended service account, got no seed documents back from Work IQ. In Run 2 it answers, but finds only 4 of 27 relevant seeds; stsadmin finds 12. See [Run 2](#run-2-2026-10-16).
 
 Question: does Work IQ find SharePoint documents that keyword search plus a Graph walk would miss? And at what cost and latency?
 
@@ -102,7 +101,7 @@ These are unlikely to change with indexing lag. Run 2 will confirm them.
 | Licences | Same `DEVELOPERPACK_E5` as stsadmin; neither account has a Copilot licence |
 | Differences from stsadmin | Created **2026-10-15 19:00 UTC**, hours before the probes; usage location CA (stsadmin US); stsadmin also has a Copilot Studio trial (`CCIBOTS_PRIVPREV_VIRAL`) |
 
-**Reading:** this is an empty 200, not a 403, a policy block or an auth failure. svc-discovery reaches older content but not documents added today, while stsadmin gets today's documents. That is consistent with per-user index lag for a new account; Run 2 tests it. If Run 2 is still empty, the next suspects are the usage location and the Copilot Studio trial licence.
+**Reading:** this is an empty 200, not a 403, a policy block or an auth failure. svc-discovery reaches older content but not documents added today, while stsadmin gets today's documents. That is consistent with per-user index lag for a new account. Run 2 partly confirms it: a day later svc-discovery gets seeds back, but only 4 of 27 against stsadmin's 12. The next suspects are the usage location and the Copilot Studio trial licence.
 
 ## Communication site caveat
 
@@ -126,28 +125,37 @@ Response shape: `result.task.artifacts[].parts` contains:
 - **An `application/vnd.ms-workiq-reference` part:** `refid → {targetLink, isCitedInResponse}`.
 - **An `application/vnd.ms-workiq.sensitivity-label` part:** one label for the whole answer.
 
-## Run 2 pending
+## Run 2 (2026-10-16)
 
-Plan: same seeds and `topics.txt`, no code change, about 24 hours after Run 1.
+Same seeds, same `topics.txt`, no code change.
 
-1. One probe as svc-discovery:
-   `uv run scripts/workiq_mcp.py probe --user svc --name r2_p2 "What footwear do staff have to wear in the warehouse?"`
-2. If it returns S06, run the full sweep as svc-discovery and score it:
-   ```
-   uv run scripts/workiq_sweep.py --user svc --rerun run2-svc
-   uv run scripts/score_workiq.py --run run2-svc --user svc
-   ```
-3. Optionally, rerun as stsadmin (`--user a --rerun run2-a`) to separate indexing lag (recall rises for both) from run-to-run variance. S06 was found in a probe and missed in the sweep the same day.
+1. **Probe as svc-discovery:** `workiq_mcp.py probe --user svc --name r2_p2 "What footwear do staff have to wear in the warehouse?"` returned S06 ("Staying safe in the warehouse"), 20.5 s. On day one the same account got an empty result.
+2. **Full sweep:** `workiq_sweep.py --user svc --rerun run2-svc`, scored with `score_workiq.py --run run2-svc --user svc`. The Graph controls ran as svc-discovery too.
+3. **Control rerun:** `workiq_sweep.py --user a --rerun run2-a`, scored with `score_workiq.py --run run2-a`. This separates indexing lag from run-to-run variance.
 
-| Measure | Run 1 (stsadmin) | Run 2 (svc-discovery) |
-|---|---|---|
-| Keyword recall | 7/9 | |
-| Metadata recall | 1/9 | |
-| Semantic recall | 3/9 | |
-| Found only by Work IQ | S07 | |
-| Precision (all / rank ≤ 3) | 90% / 88% | |
-| Median latency | 17.6 s | |
-| Credits | | |
+| Measure | Run 1 (stsadmin) | Run 2 (svc-discovery) | Run 2 (stsadmin) |
+|---|---|---|---|
+| Keyword recall | 7/9 | **1/9** (N01) | 7/9 |
+| Metadata recall | 1/9 (M03) | 2/9 (M06, N02) | 0/9 |
+| Semantic recall | 3/9 | 1/9 (S02) | 5/9 |
+| Distractors hit | 0/6 | 0/6 | 0/6 |
+| Relevant seeds found by Work IQ | 11/27 | **4/27** | 12/27 |
+| Found only by Work IQ | S07 | none | S07 |
+| Missed by everything | S03, S05, S08 | S03, S05, S07, S08 | S03, S05, S08 |
+| Precision (all / rank ≤ 3) | 90% / 88% | 83% / 83% (5/6) | 95% / 94% |
+| Calls with zero hits | 7/16 | **12/16** | 6/16 |
+| Median latency (min–max) | 17.6 s (7.8–24.0) | 11.6 s (7.1–36.8) | 15.3 s (6.5–29.1) |
+| Communication site hit rows | 1 (N01) | 2 (N01, N02) | 1 (N01) |
+| Graph Search `policy` as the same user | 7/9 keyword, 8/9 metadata | 9/9, 9/9 | 7/9, 8/9 |
+| Credits | | | |
+
+**Reading:**
+- **stsadmin is stable across runs.** It found 11 and then 12 of 27, with the same Work-IQ-only seed (S07) and the same three misses. Run-to-run variance moves a seed or two, for example M03 in and out and S04/S06 in, but does not change the picture.
+- **svc-discovery is still far behind.** Graph Search as svc-discovery finds every keyword and metadata seed, so the files are indexed and permission-trimmed for it. Work IQ as the same user returns one hit or none on 15 of 16 calls, including "policy", which returned 7 seeds for stsadmin. Its "policy" hits are the Communication site seeds and M06, not the K seeds on the team sites. The Work IQ index for a new account is evidently still filling, or it is shaped by something account-specific: usage location CA versus US, or stsadmin's Copilot Studio trial licence.
+- **The durable findings hold.** Metadata recall is 0–2 of 9 in every run. There are no `.txt` hits in any run, no score and no per-hit label.
+- **Communication site hits as svc-discovery (N01, N02) are expected** while svc-discovery can read the root site. They are not an isolation failure; see the [caveat](#communication-site-caveat).
+
+Next for svc-discovery: one more `--rerun run3-svc` in a few days. If recall still trails stsadmin, test the licence and location hypotheses by changing one at a time.
 
 ## How to run
 
